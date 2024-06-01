@@ -37,13 +37,14 @@
 
 
 #define RX_TIMEOUT_VALUE                            1000
-#define BUFFER_SIZE                                 250 // Define the payload size here
+#define BUFFER_SIZE                                 251 // Define the payload size here
 
 char txpacket[BUFFER_SIZE];
 char rxpacket[BUFFER_SIZE];
 
-double txNumber;
 
+double txNumber;
+unsigned long timeTaken;
 bool lora_idle=true;
 
 static RadioEvents_t RadioEvents;
@@ -51,7 +52,7 @@ void OnTxDone( void );
 void OnTxTimeout( void );
 
 void setup() {
-    Serial.begin(115200);
+    //Serial.begin(115200);
     Mcu.begin(HELTEC_BOARD,SLOW_CLK_TPYE);
 	
     txNumber=0;
@@ -71,22 +72,19 @@ void setup() {
 
 void loop()
 {
-	if(lora_idle == true)
+	if(lora_idle == true && digitalRead(7))
 	{
     delay(1000);
     for(int i=0; i<250; i++){
       txpacket[i] = (char) random(65,90);
     }
+    txpacket[250] ='\0';
    
 		Serial.printf("\r\nsending packet \"%s\" , length %d\r\n",txpacket, strlen(txpacket));
 
-    unsigned long startTime = millis();
+    timeTaken = millis();
 		Radio.Send( (uint8_t *)txpacket, strlen(txpacket) ); //send the package out
-    unsigned long endTime = millis();
-    unsigned long timeTaken = endTime - startTime;
-    Serial.print("Tempo total: ");
-    Serial.print(timeTaken);
-    Serial.println(" ms");
+    
 
     lora_idle = false;
 	}
@@ -97,6 +95,10 @@ void OnTxDone( void )
 {
 	Serial.println("TX done......");
 	lora_idle = true;
+  timeTaken = millis() - timeTaken;
+  Serial.print("Tempo total: ");
+  Serial.print(timeTaken);
+  Serial.println(" ms");
 }
 
 void OnTxTimeout( void )
@@ -104,4 +106,8 @@ void OnTxTimeout( void )
     Radio.Sleep( );
     Serial.println("TX Timeout......");
     lora_idle = true;
+    timeTaken = millis() - timeTaken;
+    Serial.print("Tempo total: ");
+    Serial.print(timeTaken);
+    Serial.println(" ms");
 }
