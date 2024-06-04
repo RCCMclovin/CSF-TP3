@@ -1,3 +1,4 @@
+
 /* Heltec Automation send communication test example
  *
  * Function:
@@ -37,14 +38,14 @@
 
 
 #define RX_TIMEOUT_VALUE                            1000
-#define BUFFER_SIZE                                 251 // Define the payload size here
+#define BUFFER_SIZE                                 250 // Define the payload size here
 
 char txpacket[BUFFER_SIZE];
 char rxpacket[BUFFER_SIZE];
 
-
 double txNumber;
 unsigned long timeTaken;
+
 bool lora_idle=true;
 
 static RadioEvents_t RadioEvents;
@@ -52,14 +53,14 @@ void OnTxDone( void );
 void OnTxTimeout( void );
 
 void setup() {
-    //Serial.begin(115200);
+    Serial.begin(115200);
     Mcu.begin(HELTEC_BOARD,SLOW_CLK_TPYE);
-	
+
     txNumber=0;
 
     RadioEvents.TxDone = OnTxDone;
     RadioEvents.TxTimeout = OnTxTimeout;
-    
+
     Radio.Init( &RadioEvents );
     Radio.SetChannel( RF_FREQUENCY );
     Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
@@ -72,14 +73,13 @@ void setup() {
 
 void loop()
 {
-	if(lora_idle == true && digitalRead(7))
+	if(lora_idle == true)
 	{
     delay(1000);
     for(int i=0; i<250; i++){
       txpacket[i] = (char) random(65,90);
     }
-    txpacket[250] ='\0';
-   
+
 		Serial.printf("\r\nsending packet \"%s\" , length %d\r\n",txpacket, strlen(txpacket));
 
     timeTaken = millis();
@@ -93,9 +93,9 @@ void loop()
 
 void OnTxDone( void )
 {
+  timeTaken = millis() - timeTaken;
 	Serial.println("TX done......");
 	lora_idle = true;
-  timeTaken = millis() - timeTaken;
   Serial.print("Tempo total: ");
   Serial.print(timeTaken);
   Serial.println(" ms");
@@ -103,10 +103,10 @@ void OnTxDone( void )
 
 void OnTxTimeout( void )
 {
+  timeTaken = millis() - timeTaken;
     Radio.Sleep( );
     Serial.println("TX Timeout......");
     lora_idle = true;
-    timeTaken = millis() - timeTaken;
     Serial.print("Tempo total: ");
     Serial.print(timeTaken);
     Serial.println(" ms");
